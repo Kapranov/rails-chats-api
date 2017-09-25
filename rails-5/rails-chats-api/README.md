@@ -286,10 +286,64 @@ if Rails.env.production?; end
 
 Clean up rspec files `spec/*`:
 
+```
+# spec/controllers/profiles_controller_spec.rb
+require 'rails_helper'
+
+RSpec.describe ProfilesController, type: :controller do
+
+end
+```
+
+```
+# spec/controllers/sessions_controller_spec.rb
+require 'rails_helper'
+
+RSpec.describe SessionsController, type: :controller do
+
+end
+```
+
+```
+# spec/models/auth_token_spec.rb
+require 'rails_helper'
+
+RSpec.describe AuthToken, type: :model do
+
+end
+```
+
+```
+# spec/models/chat_spec.rb
+require 'rails_helper'
+
+RSpec.describe Chat, type: :model do
+
+end
+```
+
+```
+# spec/models/chats_user_spec.rb
+require 'rails_helper'
+
+RSpec.describe ChatsUser, type: :model do
+
+end
+```
+
+```
+# spec/models/user_spec.rb
+require 'rails_helper'
+
+RSpec.describe User, type: :model do
+
+end
+```
+
 Run clean logs: `rake tmp:clear log:clear`
+
 Run migrations: `rake db:create db:migrate db:seed`
+
 Run rspec: `bundle exec rspec`
-
-
 
 ### 25 Sep 2017 Oleg G.Kapranov
