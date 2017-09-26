@@ -1,11 +1,13 @@
 class AuthToken < ApplicationRecord
-  belongs_to :user
+  before_create :generate_token
 
-  before_create :assign_value
+  belongs_to :user
 
   private
 
-  def assign_value
-    self.value = SecureRandom.uuid
+  def generate_token
+    begin
+      self.value = SecureRandom.hex
+    end while self.class.exists?(value: value)
   end
 end

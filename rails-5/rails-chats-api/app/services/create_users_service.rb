@@ -1,6 +1,6 @@
 class CreateUsersService
   def call
-    User.create!(email: "test@example.com", password: "mysecret")
+    User.create!(email: "Test@Example.Com", password: "mysecret")
   end
 end
 

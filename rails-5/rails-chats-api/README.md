@@ -58,6 +58,17 @@ class Hash
 end
 ```
 
+We will also use Rails URL helpers for link generation and have to
+specify default URL options in environment files. Here is what I added
+in `development.rb` and `test.rb` files in `config/environments/ directory`:
+
+```
+Rails.application.routes.default_url_options = {
+  host: 'localhost',
+  port: 3000
+}
+```
+
 > Create new project
 
 ```
@@ -203,21 +214,42 @@ profile GET    /profile(.:format) profiles#show
 
 ```
 rails g model user email password_digest
-rails g model chat
+rails g model chat message
 rails g model auth_token value user:belongs_to
-rails g model chats_user chat:belongs_to user:belongs_to
+
+#rails g model chats_user value:string  chats_userable:references{polymorphic}
+#rails g model chats_user value auth_tokenable_id:integer auth_takenable_type
 ```
 
 Edit model `app/models/user.rb`:
 
 ```
 class User < ApplicationRecord
-  has_many :chats_users
-  has_many :chats, through: :chats
+  before_save :downcase_fields
+
+  has_one :auth_token, dependent: :destroy
 
   has_secure_password
 
-  validates :email, presence: true, uniqueness: { case_sensitive: false }
+  VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
+
+  validates :email, presence: true,
+    length: { minimum: 5, maximum: 35 },
+    format: { with: VALID_EMAIL_REGEX },
+    uniqueness: { case_sensitive: false }
+
+  def self.valid_login?(email, password)
+    user = find_by(email: email)
+    if user && user.authenticate(password)
+      user
+    end
+  end
+
+  private
+
+  def downcase_fields
+    self.email = email.downcase
+  end
 end
 ```
 
@@ -225,24 +257,17 @@ Edit model `app/models/auth_token.rb`:
 
 ```
 class AuthToken < ApplicationRecord
-  belongs_to :user
+  before_create :generate_token
 
-  before_create :assign_value
+  belongs_to :user
 
   private
 
-  def assign_value
-    self.value = SecureRandom.uuid
+  def generate_token
+    begin
+      self.value = SecureRandom.hex
+    end while self.class.exists?(value: value)
   end
-end
-```
-
-Edit model `app/models/chats_user.rb`:
-
-```
-class ChatsUser < ApplicationRecord
-  belongs_to :chat_id
-  belongs_to :user_id
 end
 ```
 
@@ -250,6 +275,16 @@ Edit model `app/models/chat.rb`:
 
 ```
 class Chat < ApplicationRecord
+  before_save :downcase_fields
+
+  validates :message, presence: true,
+    length: { minimum: 4,  maximum: 25, allow_blank: false }
+
+  private
+
+  def downcase_fields
+    self.message = message.downcase
+  end
 end
 ```
 
@@ -258,6 +293,8 @@ end
 ```
 mkdir app/services
 touch app/services/create_users_service.rb
+touch app/services/create_chats_service.rb
+touch app/services/create_tokens_service.rb
 ```
 
 Edit file `app/services/create_users_service.rb`:
@@ -270,6 +307,26 @@ class CreateUsersService
 end
 ```
 
+Edit file `app/services/create_chats_service.rb`:
+
+```
+class CreateChatsService
+  def call
+    Chat.create(message: "My First Message!")
+  end
+end
+```
+
+Edit file `app/services/create_tokens_service.rb`:
+
+```
+class CreateTokensService
+  def call
+    AuthToken.create(user_id: User.first[:id])
+  end
+end
+```
+
 Edit file `db/seeds.rb`:
 
 ```
@@ -277,6 +334,12 @@ if Rails.env.development?
   puts "━━━━━━━━━━━ Creating Users ━━━━━━━━━━━"
   CreateUsersService.new.call
   puts 'Users Total: ' << "#{User.count}"
+  puts "━━━━━━━━━━━ Creating Users ━━━━━━━━━━━"
+  CreateTokensService.new.call
+  puts 'Token Total: ' << "#{AuthToken.count}"
+  puts "━━━━━━━━━━━ Creating Chats ━━━━━━━━━━━"
+  CreateChatsService.new.call
+  puts 'Chats Total: ' << "#{Chat.count}"
   puts "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 end
 
@@ -346,4 +409,66 @@ Run migrations: `rake db:create db:migrate db:seed`
 
 Run rspec: `bundle exec rspec`
 
-### 25 Sep 2017 Oleg G.Kapranov
+> Setup serializers
+
+```
+# app/serializers/user_serializer.rb
+
+class UserSerializer < ActiveModel::Serializer
+  attributes :id, :email
+end
+```
+
+> Setup controllers
+
+```
+# app/controllers/application_controller.rb
+class ApplicationController < ActionController::API
+  include ActionController::HttpAuthentication::Token::ControllerMethods
+
+  def authenticate!
+    authenticate_token || render_unauthorized("Access denied")
+  end
+
+  def current_user
+    @current_user ||= authenticate_token
+  end
+
+  protected
+
+  def render_unauthorized(message)
+    errors = { errors: [ { detail: message } ] }.to_json
+    render json: errors, status: :unauthorized
+  end
+
+  private
+
+  def authenticate_token
+    authenticate_or_request_with_http_token do |token, options|
+      User.joins(:auth_token).find_by(auth_tokens: { value: token })
+    end
+  end
+end
+```
+
+```
+# app/controllers/sessions_controller.rb
+class SessionsController < ApplicationController
+  skip_before_action :authenticate!, only: [:create], raise: false
+
+  def create
+    if @current_user = User.valid_login?(params[:email], params[:password])
+      render json: { api_token: @current_user.auth_token.value }.to_json
+    else
+      render_unauthorized("Error with your login or password")
+    end
+  end
+
+  def destroy
+    @current_user.logout
+    head :ok
+  end
+end
+```
+
+### 26 Sep 2017 Oleg G.Kapranov
