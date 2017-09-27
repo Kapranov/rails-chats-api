@@ -197,7 +197,7 @@ Edit routes `config/routes.rb`:
 ```
 Rails.application.routes.draw do
   resource :session, only: [:create, :destroy]
-  resource :profile, only: [:create, :show]
+  resource :profile, only: [:update, :show, :destroy]
 end
 ```
 
@@ -205,10 +205,12 @@ Check it out routes `rake routes`:
 
 ```
  Prefix Verb   URI Pattern        Controller#Action
-session DELETE /session(.:format) sessions#destroy {:format=>"json"}
-        POST   /session(.:format) sessions#create  {:format=>"json"}
-profile GET    /profile(.:format) profiles#show    {:format=>"json"}
-        POST   /profile(.:format) profiles#create  {:format=>"json"}
+session DELETE /session(.:format) sessions#destroy
+        POST   /session(.:format) sessions#create
+profile GET    /profile(.:format) profiles#show
+        PATCH  /profile(.:format) profiles#update
+        PUT    /profile(.:format) profiles#update
+        DELETE /profile(.:format) profiles#destroy
 ```
 
 > Create models
@@ -506,8 +508,7 @@ class SessionsController < AuthenticationController
     @current_user = User.new(session_params)
 
     if @current_user.save
-      # render json: { user_id: @current_user.id, api_token: @current_user.auth_token.value }.to_json
-      render json: @current_user
+      render json: { user_id: @current_user.id, api_token: @current_user.auth_token.value }.to_json
     else
       render_unauthorized("Error with your login or password")
     end
@@ -540,6 +541,52 @@ class SessionsController < AuthenticationController
 end
 ```
 
+```
+# app/controllers/profiles_controller.rb
+class ProfilesController < AuthenticationController
+  skip_before_action :authenticate, only: [:show, :update, :destroy], raise: false
+  before_action :set_profile, only: [:show, :update, :destroy]
+
+  def show
+    if @current_user
+      render json: @current_user
+    else
+      render_unauthorized("Error with your login or password")
+    end
+  end
+
+  def update
+    if @current_user.update(profile_params)
+      render json: @current_user
+    else
+      render_unauthorized("Error with your login or password")
+    end
+  end
+
+  def destroy
+    if @current_user.destroy
+      render json: { message: "Your user account was deleted" }.to_json, status: :ok
+    else
+      render_unauthorized("Error with your login or password")
+    end
+  end
+
+  private
+
+  def set_profile
+    @current_user = User.includes(:auth_token).find(params[:id])
+  end
+
+  def profile_params
+    params.require(:profile).permit(
+      :email,
+      :password,
+      :password_confirmation
+    )
+  end
+end
+```
+
 Check it out:
 
 ```
@@ -548,12 +595,26 @@ rake db:drop db:create db:migrate tmp:clear log:clear; rails s
 **Make requests**:
 
 ```
-# usage curl
-curl -d 'session[email]=test1@example.com&session[password]=mysecret' -X POST localhost:3000/session
-curl -d 'session[email]=test2@example.com&session[password]=mysecret' -X POST localhost:3000/session
-curl -d 'session[email]=test3@example.com&session[password]=mysecret' -X POST localhost:3000/session
+# usage header
+curl -I -v localhost:3000
+curl -I --trace-ascii - localhost:3000
 
-curl -d '[id]=2' -X DELETE localhost:3000/session
+curl -H 'Accept: application/json' localhost:3000/session | jq '.'
+curl -H 'Accept: application/json' localhsot:3000/session | python -m json.tool
+
+# usage curl Sign In
+curl -H 'Accept: application/json' -d 'session[email]=test1@example.com&session[password]=mysecret' -X POST localhost:3000/session
+curl -H 'Accept: application/json' -d 'session[email]=test2@example.com&session[password]=mysecret' -X POST localhost:3000/session
+curl -H 'Accept: application/json' -d 'session[email]=test3@example.com&session[password]=mysecret' -X POST localhost:3000/session
+
+# usage curl Destroy
+curl -H 'Accept: application/json' -d '[id]=1' -X DELETE localhost:3000/session
+
+# usage curl Sign Up
+curl -H 'Accept: application/json' -d 'user[email]=test1@example.com&user[password]=mysecret&user[password_confirmation]=mysecret' localhost:3000/profile
+
+# usage curl Get own Profile info
+curl -H 'Accept: application/json' -H 'Authorization: Token token="XXXX-YYYY-ZZZZ"' localhost:3000/profile
 
 # usage httpie
 http POST :3000/session email="test1@example.com" password="mysecret"
@@ -561,6 +622,16 @@ http POST :3000/session email="test2@example.com" password="mysecret"
 http POST :3000/session email="test3@example.com" password="mysecret"
 
 http DELETE :3000/session id="1"
+
+http GET :3000/profile id="1"
+http GET :3000/profile id="2"
+http GET :3000/profile id="3"
+
+http PUT :3000/profile email="new_test1@example.com" password="newsecret" password_confirmation="newsecret" id="1"
+http PUT :3000/profile email="new_test2@example.com" password="newsecret" password_confirmation="newsecret" id="2"
+http PUT :3000/profile email="new_test3@example.com" password="newsecret" password_confirmation="newsecret" id="3"
+
+curl -d '[id]=1' -X DELETE localhost:3000/profile
 ```
 
 ### 27 Sep 2017 Oleg G.Kapranov

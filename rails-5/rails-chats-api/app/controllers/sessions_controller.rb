@@ -7,8 +7,7 @@ class SessionsController < AuthenticationController
     @current_user = User.new(session_params)
 
     if @current_user.save
-      # render json: { user_id: @current_user.id, api_token: @current_user.auth_token.value }.to_json
-      render json: @current_user
+      render json: { api_token: @current_user.auth_token.value }.to_json
     else
       render_unauthorized("Error with your login or password")
     end
