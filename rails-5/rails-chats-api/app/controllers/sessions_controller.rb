@@ -27,10 +27,6 @@ class SessionsController < AuthenticationController
     @current_user = User.includes(:auth_token).find(params[:id])
   end
 
-  def auth_token_params
-    params.require(:auth_token).permit(:user_id, :value)
-  end
-
   def session_params
     params.require(:session).permit(
       :email,
