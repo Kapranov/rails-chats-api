@@ -8,6 +8,7 @@ class User < ApplicationRecord
 
   VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
 
+  validates_associated :auth_token
   validates :email, presence: true,
     length: { minimum: 5, maximum: 35 },
     format: { with: VALID_EMAIL_REGEX },

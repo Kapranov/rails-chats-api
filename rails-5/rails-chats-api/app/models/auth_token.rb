@@ -1,13 +1,12 @@
 class AuthToken < ApplicationRecord
   before_validation :generate_token
 
-  belongs_to :user, foreign_key: :user_id, class_name: :User, optional: true
+  belongs_to :user
 
   validates_associated :user
 
-  validates :value, presence: true,
-    uniqueness: { scope: :user_id },
-    length: { minimum: 25, allow_blank: false }
+  validates :user_id,
+    presence: true, uniqueness: true
 
   private
 
