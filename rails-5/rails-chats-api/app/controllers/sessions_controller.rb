@@ -1,16 +1,41 @@
-class SessionsController < ApplicationController
-  skip_before_action :authenticate!, only: [:create], raise: false
+class SessionsController < AuthenticationController
+  skip_before_action :authenticate, only: [:create, :destroy], raise: false
+
+  before_action :set_session,  only: [:destroy]
 
   def create
-    if @current_user = User.valid_login?(params[:email], params[:password])
-      render json: { api_token: @current_user.auth_token.value }.to_json
+    @current_user = User.new(session_params)
+
+    if @current_user.save
+      # render json: { user_id: @current_user.id, api_token: @current_user.auth_token.value }.to_json
+      render json: @current_user
     else
       render_unauthorized("Error with your login or password")
     end
   end
 
   def destroy
-    @current_user.logout
-    head :ok
+    if @current_user.destroy
+      render json: { message: "User was deleted" }.to_json, status: :ok
+    else
+      render_unauthorized("Error with your login or password")
+    end
+  end
+
+  private
+
+  def set_session
+    @current_user = User.includes(:auth_token).find(params[:id])
+  end
+
+  def auth_token_params
+    params.require(:auth_token).permit(:user_id, :value)
+  end
+
+  def session_params
+    params.require(:session).permit(
+      :email,
+      :password
+    )
   end
 end

@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   before_save :downcase_fields
+  after_create :init_token
 
   has_one :auth_token, dependent: :destroy
 
@@ -12,16 +13,13 @@ class User < ApplicationRecord
     format: { with: VALID_EMAIL_REGEX },
     uniqueness: { case_sensitive: false }
 
-  def self.valid_login?(email, password)
-    user = find_by(email: email)
-    if user && user.authenticate(password)
-      user
-    end
-  end
-
   private
 
   def downcase_fields
     self.email = email.downcase
+  end
+
+  def init_token
+    self.create_auth_token!
   end
 end

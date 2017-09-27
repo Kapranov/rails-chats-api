@@ -1,16 +1,64 @@
-Started POST "/sessions" for 127.0.0.1 at 2017-09-26 14:17:04 +0300
+Started POST "/session" for 127.0.0.1 at 2017-09-27 09:25:03 +0300
   [1m[35m (0.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC[0m
-Processing by SessionsController#create as JSON
-  Parameters: {"email"=>"test@example.com", "password"=>"[FILTERED]", "session"=>{"email"=>"test@example.com", "password"=>"[FILTERED]"}}
-  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT  "users".* FROM "users" WHERE "users"."email" = ? LIMIT ?[0m  [["email", "test@example.com"], ["LIMIT", 1]]
-  [1m[36mAuthToken Load (0.2ms)[0m  [1m[34mSELECT  "auth_tokens".* FROM "auth_tokens" WHERE "auth_tokens"."user_id" = ? LIMIT ?[0m  [["user_id", 1], ["LIMIT", 1]]
-Completed 200 OK in 122ms (Views: 4.8ms | ActiveRecord: 1.6ms)
+Processing by SessionsController#create as HTML
+  Parameters: {"email"=>"test1@example.com", "password"=>"[FILTERED]", "session"=>{"email"=>"test1@example.com", "password"=>"[FILTERED]"}}
+  [1m[35m (0.1ms)[0m  [1m[36mbegin transaction[0m
+  [1m[36mUser Exists (0.2ms)[0m  [1m[34mSELECT  1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER(?) LIMIT ?[0m  [["email", "test1@example.com"], ["LIMIT", 1]]
+  [1m[35mSQL (0.3ms)[0m  [1m[32mINSERT INTO "users" ("email", "password_digest", "created_at", "updated_at") VALUES (?, ?, ?, ?)[0m  [["email", "test1@example.com"], ["password_digest", "$2a$10$USueuxBRxxr3FqRSfaQxfuH1fmjhKjUjHo09KMrLIr3nkns/SEFnW"], ["created_at", "2017-09-27 06:25:03.835408"], ["updated_at", "2017-09-27 06:25:03.835408"]]
+  [1m[36mAuthToken Exists (0.2ms)[0m  [1m[34mSELECT  1 AS one FROM "auth_tokens" WHERE "auth_tokens"."value" = ? LIMIT ?[0m  [["value", "c8975dd94b1e4fbeb2a2f8f5677d22f4"], ["LIMIT", 1]]
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT  "users".* FROM "users" WHERE "users"."id" = ? LIMIT ?[0m  [["id", 1], ["LIMIT", 1]]
+  [1m[36mUser Exists (0.2ms)[0m  [1m[34mSELECT  1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER(?) AND ("users"."id" != ?) LIMIT ?[0m  [["email", "test1@example.com"], ["id", 1], ["LIMIT", 1]]
+  [1m[36mAuthToken Exists (0.2ms)[0m  [1m[34mSELECT  1 AS one FROM "auth_tokens" WHERE "auth_tokens"."value" = ? AND "auth_tokens"."user_id" = ? LIMIT ?[0m  [["value", "c8975dd94b1e4fbeb2a2f8f5677d22f4"], ["user_id", 1], ["LIMIT", 1]]
+  [1m[35mSQL (0.2ms)[0m  [1m[32mINSERT INTO "auth_tokens" ("value", "user_id", "created_at", "updated_at") VALUES (?, ?, ?, ?)[0m  [["value", "c8975dd94b1e4fbeb2a2f8f5677d22f4"], ["user_id", 1], ["created_at", "2017-09-27 06:25:03.864573"], ["updated_at", "2017-09-27 06:25:03.864573"]]
+  [1m[36mAuthToken Load (0.1ms)[0m  [1m[34mSELECT  "auth_tokens".* FROM "auth_tokens" WHERE "auth_tokens"."user_id" = ? LIMIT ?[0m  [["user_id", 1], ["LIMIT", 1]]
+  [1m[35m (216.4ms)[0m  [1m[36mcommit transaction[0m
+[active_model_serializers] Rendered UserSerializer with ActiveModelSerializers::Adapter::Attributes (2.67ms)
+Completed 200 OK in 371ms (Views: 19.3ms | ActiveRecord: 219.1ms)
 
 
-Started POST "/sessions" for 127.0.0.1 at 2017-09-26 14:17:06 +0300
-Processing by SessionsController#create as JSON
-  Parameters: {"email"=>"test@example.com", "password"=>"[FILTERED]", "session"=>{"email"=>"test@example.com", "password"=>"[FILTERED]"}}
-  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT  "users".* FROM "users" WHERE "users"."email" = ? LIMIT ?[0m  [["email", "test@example.com"], ["LIMIT", 1]]
-Completed 401 Unauthorized in 91ms (Views: 0.4ms | ActiveRecord: 0.6ms)
+Started POST "/session" for 127.0.0.1 at 2017-09-27 09:25:06 +0300
+Processing by SessionsController#create as HTML
+  Parameters: {"email"=>"test2@example.com", "password"=>"[FILTERED]", "session"=>{"email"=>"test2@example.com", "password"=>"[FILTERED]"}}
+  [1m[35m (0.1ms)[0m  [1m[36mbegin transaction[0m
+  [1m[36mUser Exists (0.2ms)[0m  [1m[34mSELECT  1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER(?) LIMIT ?[0m  [["email", "test2@example.com"], ["LIMIT", 1]]
+  [1m[35mSQL (0.7ms)[0m  [1m[32mINSERT INTO "users" ("email", "password_digest", "created_at", "updated_at") VALUES (?, ?, ?, ?)[0m  [["email", "test2@example.com"], ["password_digest", "$2a$10$UuFffY7EP7S0kP93Xxds5uyCUR9iAgxulOGsh5HEYLB2JwMkporzS"], ["created_at", "2017-09-27 06:25:06.775219"], ["updated_at", "2017-09-27 06:25:06.775219"]]
+  [1m[36mAuthToken Exists (0.2ms)[0m  [1m[34mSELECT  1 AS one FROM "auth_tokens" WHERE "auth_tokens"."value" = ? LIMIT ?[0m  [["value", "8acc154969ba49369e398b15656ab4aa"], ["LIMIT", 1]]
+  [1m[36mUser Load (0.1ms)[0m  [1m[34mSELECT  "users".* FROM "users" WHERE "users"."id" = ? LIMIT ?[0m  [["id", 2], ["LIMIT", 1]]
+  [1m[36mUser Exists (0.2ms)[0m  [1m[34mSELECT  1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER(?) AND ("users"."id" != ?) LIMIT ?[0m  [["email", "test2@example.com"], ["id", 2], ["LIMIT", 1]]
+  [1m[36mAuthToken Exists (0.2ms)[0m  [1m[34mSELECT  1 AS one FROM "auth_tokens" WHERE "auth_tokens"."value" = ? AND "auth_tokens"."user_id" = ? LIMIT ?[0m  [["value", "8acc154969ba49369e398b15656ab4aa"], ["user_id", 2], ["LIMIT", 1]]
+  [1m[35mSQL (0.2ms)[0m  [1m[32mINSERT INTO "auth_tokens" ("value", "user_id", "created_at", "updated_at") VALUES (?, ?, ?, ?)[0m  [["value", "8acc154969ba49369e398b15656ab4aa"], ["user_id", 2], ["created_at", "2017-09-27 06:25:06.783197"], ["updated_at", "2017-09-27 06:25:06.783197"]]
+  [1m[36mAuthToken Load (0.2ms)[0m  [1m[34mSELECT  "auth_tokens".* FROM "auth_tokens" WHERE "auth_tokens"."user_id" = ? LIMIT ?[0m  [["user_id", 2], ["LIMIT", 1]]
+  [1m[35m (166.5ms)[0m  [1m[36mcommit transaction[0m
+[active_model_serializers] Rendered UserSerializer with ActiveModelSerializers::Adapter::Attributes (0.36ms)
+Completed 200 OK in 271ms (Views: 0.8ms | ActiveRecord: 168.8ms)
+
+
+Started POST "/session" for 127.0.0.1 at 2017-09-27 09:25:09 +0300
+Processing by SessionsController#create as HTML
+  Parameters: {"email"=>"test3@example.com", "password"=>"[FILTERED]", "session"=>{"email"=>"test3@example.com", "password"=>"[FILTERED]"}}
+  [1m[35m (0.1ms)[0m  [1m[36mbegin transaction[0m
+  [1m[36mUser Exists (0.2ms)[0m  [1m[34mSELECT  1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER(?) LIMIT ?[0m  [["email", "test3@example.com"], ["LIMIT", 1]]
+  [1m[35mSQL (0.2ms)[0m  [1m[32mINSERT INTO "users" ("email", "password_digest", "created_at", "updated_at") VALUES (?, ?, ?, ?)[0m  [["email", "test3@example.com"], ["password_digest", "$2a$10$g2t02tCWxfuJkVKSp9.pQ.RJA9MRQ4gqWj1Rki1Ej1B.Epexpuqs2"], ["created_at", "2017-09-27 06:25:09.986617"], ["updated_at", "2017-09-27 06:25:09.986617"]]
+  [1m[36mAuthToken Exists (0.1ms)[0m  [1m[34mSELECT  1 AS one FROM "auth_tokens" WHERE "auth_tokens"."value" = ? LIMIT ?[0m  [["value", "6df9c4e888054fd491a921ed1bb770d4"], ["LIMIT", 1]]
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT  "users".* FROM "users" WHERE "users"."id" = ? LIMIT ?[0m  [["id", 3], ["LIMIT", 1]]
+  [1m[36mUser Exists (0.7ms)[0m  [1m[34mSELECT  1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER(?) AND ("users"."id" != ?) LIMIT ?[0m  [["email", "test3@example.com"], ["id", 3], ["LIMIT", 1]]
+  [1m[36mAuthToken Exists (0.1ms)[0m  [1m[34mSELECT  1 AS one FROM "auth_tokens" WHERE "auth_tokens"."value" = ? AND "auth_tokens"."user_id" = ? LIMIT ?[0m  [["value", "6df9c4e888054fd491a921ed1bb770d4"], ["user_id", 3], ["LIMIT", 1]]
+  [1m[35mSQL (0.2ms)[0m  [1m[32mINSERT INTO "auth_tokens" ("value", "user_id", "created_at", "updated_at") VALUES (?, ?, ?, ?)[0m  [["value", "6df9c4e888054fd491a921ed1bb770d4"], ["user_id", 3], ["created_at", "2017-09-27 06:25:09.997049"], ["updated_at", "2017-09-27 06:25:09.997049"]]
+  [1m[36mAuthToken Load (0.1ms)[0m  [1m[34mSELECT  "auth_tokens".* FROM "auth_tokens" WHERE "auth_tokens"."user_id" = ? LIMIT ?[0m  [["user_id", 3], ["LIMIT", 1]]
+  [1m[35m (167.1ms)[0m  [1m[36mcommit transaction[0m
+[active_model_serializers] Rendered UserSerializer with ActiveModelSerializers::Adapter::Attributes (0.35ms)
+Completed 200 OK in 274ms (Views: 0.9ms | ActiveRecord: 169.0ms)
+
+
+Started DELETE "/session" for 127.0.0.1 at 2017-09-27 09:25:14 +0300
+Processing by SessionsController#destroy as HTML
+  Parameters: {"id"=>"1", "session"=>{"id"=>"1"}}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT  "users".* FROM "users" WHERE "users"."id" = ? LIMIT ?[0m  [["id", 1], ["LIMIT", 1]]
+  [1m[36mAuthToken Load (0.2ms)[0m  [1m[34mSELECT "auth_tokens".* FROM "auth_tokens" WHERE "auth_tokens"."user_id" = 1[0m
+  [1m[35m (0.1ms)[0m  [1m[36mbegin transaction[0m
+  [1m[35mSQL (1.2ms)[0m  [1m[31mDELETE FROM "auth_tokens" WHERE "auth_tokens"."id" = ?[0m  [["id", 1]]
+  [1m[35mSQL (0.1ms)[0m  [1m[31mDELETE FROM "users" WHERE "users"."id" = ?[0m  [["id", 1]]
+  [1m[35m (194.3ms)[0m  [1m[36mcommit transaction[0m
+Completed 200 OK in 212ms (Views: 4.3ms | ActiveRecord: 196.2ms)
 
 

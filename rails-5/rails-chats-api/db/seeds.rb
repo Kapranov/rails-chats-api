@@ -2,7 +2,7 @@ if Rails.env.development?
   puts "━━━━━━━━━━━ Creating Users ━━━━━━━━━━━"
   CreateUsersService.new.call
   puts 'Users Total: ' << "#{User.count}"
-  puts "━━━━━━━━━━━ Creating Users ━━━━━━━━━━━"
+  puts "━━━━━━━━━━━ Creating Token ━━━━━━━━━━━"
   CreateTokensService.new.call
   puts 'Token Total: ' << "#{AuthToken.count}"
   puts "━━━━━━━━━━━ Creating Chats ━━━━━━━━━━━"

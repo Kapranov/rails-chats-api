@@ -189,6 +189,7 @@ Check it out `bundle exec rspec`
 ```
 rails g controller Sessions
 rails g controller Profiles
+rails g controller Authentication
 ```
 
 Edit routes `config/routes.rb`:
@@ -204,10 +205,10 @@ Check it out routes: `rake routes`
 
 ```
  Prefix Verb   URI Pattern        Controller#Action
-session DELETE /session(.:format) sessions#destroy
-        POST   /session(.:format) sessions#create
-profile GET    /profile(.:format) profiles#show
-        POST   /profile(.:format) profiles#create
+session DELETE /session(.:format) sessions#destroy {:format=>"json"}
+        POST   /session(.:format) sessions#create  {:format=>"json"}
+profile GET    /profile(.:format) profiles#show    {:format=>"json"}
+        POST   /profile(.:format) profiles#create  {:format=>"json"}
 ```
 
 > Create models
@@ -221,11 +222,27 @@ rails g model auth_token value user:belongs_to
 #rails g model chats_user value auth_tokenable_id:integer auth_takenable_type
 ```
 
+Edit `db/migrate/20170926093803_create_auth_tokens.rb`:
+
+```
+class CreateAuthTokens < ActiveRecord::Migration[5.1]
+  def change
+    create_table :auth_tokens do |t|
+      t.string :value
+      t.belongs_to :user, index: { unique: true }, foreign_key: true
+
+      t.timestamps
+    end
+  end
+end
+```
+
 Edit model `app/models/user.rb`:
 
 ```
 class User < ApplicationRecord
   before_save :downcase_fields
+  after_create :init_token
 
   has_one :auth_token, dependent: :destroy
 
@@ -238,17 +255,14 @@ class User < ApplicationRecord
     format: { with: VALID_EMAIL_REGEX },
     uniqueness: { case_sensitive: false }
 
-  def self.valid_login?(email, password)
-    user = find_by(email: email)
-    if user && user.authenticate(password)
-      user
-    end
-  end
-
   private
 
   def downcase_fields
     self.email = email.downcase
+  end
+
+  def init_token
+    self.create_auth_token!
   end
 end
 ```
@@ -257,15 +271,21 @@ Edit model `app/models/auth_token.rb`:
 
 ```
 class AuthToken < ApplicationRecord
-  before_create :generate_token
+  before_validation :generate_token
 
-  belongs_to :user
+  belongs_to :user, foreign_key: :user_id, class_name: :User, optional: true
+
+  validates_associated :user
+
+  validates :value, presence: true,
+    uniqueness: { scope: :user_id },
+    length: { minimum: 25, allow_blank: false }
 
   private
 
   def generate_token
     begin
-      self.value = SecureRandom.hex
+      self.value = SecureRandom.uuid.gsub(/\-/,'')
     end while self.class.exists?(value: value)
   end
 end
@@ -334,7 +354,7 @@ if Rails.env.development?
   puts "━━━━━━━━━━━ Creating Users ━━━━━━━━━━━"
   CreateUsersService.new.call
   puts 'Users Total: ' << "#{User.count}"
-  puts "━━━━━━━━━━━ Creating Users ━━━━━━━━━━━"
+  puts "━━━━━━━━━━━ Creating Token ━━━━━━━━━━━"
   CreateTokensService.new.call
   puts 'Token Total: ' << "#{AuthToken.count}"
   puts "━━━━━━━━━━━ Creating Chats ━━━━━━━━━━━"
@@ -415,7 +435,16 @@ Run rspec: `bundle exec rspec`
 # app/serializers/user_serializer.rb
 
 class UserSerializer < ActiveModel::Serializer
-  attributes :id, :email
+  attributes :email, :auth_token
+  has_one :auth_token, include: :all
+end
+```
+
+```
+# app/serializers/auth_token_serializer.rb
+class AuthTokenSerializer < ActiveModel::Serializer
+  attributes :user_id, :value
+  belongs_to :user
 end
 ```
 
@@ -424,9 +453,22 @@ end
 ```
 # app/controllers/application_controller.rb
 class ApplicationController < ActionController::API
+  before_action :set_default_format
+
+  private
+
+  def set_default_format
+    request.format = :json
+  end
+end
+```
+
+```
+# app/controllers/authentication_controller.rb
+class AuthenticationController < ApplicationController
   include ActionController::HttpAuthentication::Token::ControllerMethods
 
-  def authenticate!
+  def authenticate
     authenticate_token || render_unauthorized("Access denied")
   end
 
@@ -453,22 +495,61 @@ end
 
 ```
 # app/controllers/sessions_controller.rb
-class SessionsController < ApplicationController
-  skip_before_action :authenticate!, only: [:create], raise: false
+class SessionsController < AuthenticationController
+  skip_before_action :authenticate, only: [:create, :destroy], raise: false
+
+  before_action :set_session,  only: [:destroy]
 
   def create
-    if @current_user = User.valid_login?(params[:email], params[:password])
-      render json: { api_token: @current_user.auth_token.value }.to_json
+    @current_user = User.new(session_params)
+
+    if @current_user.save
+      # render json: { user_id: @current_user.id, api_token: @current_user.auth_token.value }.to_json
+      render json: @current_user
     else
       render_unauthorized("Error with your login or password")
     end
   end
 
   def destroy
-    @current_user.logout
-    head :ok
+    if @current_user.destroy
+      render json: { message: "User was deleted" }.to_json, status: :ok
+    else
+      render_unauthorized("Error with your login or password")
+    end
+  end
+
+  private
+
+  def set_session
+    @current_user = User.includes(:auth_token).find(params[:id])
+  end
+
+  def auth_token_params
+    params.require(:auth_token).permit(:user_id, :value)
+  end
+
+  def session_params
+    params.require(:session).permit(
+      :email,
+      :password
+    )
   end
 end
+```
+
+Check it out:
+
+```
+# usage curl
+curl -d '[email]=test1@example.com&[password]=mysecret' -X POST localhost:3000/session
+
+# usage httpie
+http POST :3000/session email="test1@example.com" password="mysecret"
+http POST :3000/session email="test2@example.com" password="mysecret"
+http POST :3000/session email="test3@example.com" password="mysecret"
+
+http DELETE :3000/session id="1"
 ```
 
 ### 26 Sep 2017 Oleg G.Kapranov
