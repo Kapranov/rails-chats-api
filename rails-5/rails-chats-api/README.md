@@ -1,5 +1,11 @@
 # README
 
+> Create new project
+
+```
+rails new rails-chats-api --api --skip-yarn --skip-git --skip-keeps --skip-action-mailer --skip-action-cable --skip-test --skip-system-test
+```
+
 > Version Ruby
 
 ```
@@ -69,12 +75,6 @@ Rails.application.routes.default_url_options = {
 }
 ```
 
-> Create new project
-
-```
-rails new rails-chats-api --api --skip-yarn --skip-git --skip-keeps --skip-action-mailer --skip-action-cable --skip-test --skip-system-test
-```
-
 > Add packages
 
 ```
@@ -106,7 +106,7 @@ end
 rails generate rspec:install
 ```
 
-edit file `.rspec`:
+Edit file `.rspec`:
 
 ```
 --color
@@ -114,7 +114,7 @@ edit file `.rspec`:
 --require spec_helper
 ```
 
-edit file `spec/rails_helper.rb`:
+Edit file `spec/rails_helper.rb`:
 
 ```
 require 'spec_helper'
@@ -147,7 +147,7 @@ Shoulda::Matchers.configure do |config|
 end
 ```
 
-edit file `spec/spec_helper.rb`:
+Edit file `spec/spec_helper.rb`:
 
 ```
 RSpec.configure do |config|
@@ -182,7 +182,7 @@ module RailsChatsApi
 end
 ```
 
-Check it out `bundle exec rspec`
+Check it out: `bundle exec rspec`
 
 > Create controllers
 
@@ -201,7 +201,7 @@ Rails.application.routes.draw do
 end
 ```
 
-Check it out routes: `rake routes`
+Check it out routes `rake routes`:
 
 ```
  Prefix Verb   URI Pattern        Controller#Action
@@ -429,7 +429,9 @@ Run migrations: `rake db:create db:migrate db:seed`
 
 Run rspec: `bundle exec rspec`
 
-> Setup serializers
+> Setup Serializers
+
+Create directory and files `app/serializers`:
 
 ```
 # app/serializers/user_serializer.rb
@@ -448,7 +450,7 @@ class AuthTokenSerializer < ActiveModel::Serializer
 end
 ```
 
-> Setup controllers
+> Setup Controllers
 
 ```
 # app/controllers/application_controller.rb
@@ -541,6 +543,11 @@ end
 Check it out:
 
 ```
+rake db:drop db:create db:migrate tmp:clear log:clear; rails s
+```
+**Make requests**:
+
+```
 # usage curl
 curl -d '[email]=test1@example.com&[password]=mysecret' -X POST localhost:3000/session
 
@@ -552,4 +559,4 @@ http POST :3000/session email="test3@example.com" password="mysecret"
 http DELETE :3000/session id="1"
 ```
 
-### 26 Sep 2017 Oleg G.Kapranov
+### 27 Sep 2017 Oleg G.Kapranov
