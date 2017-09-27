@@ -549,7 +549,11 @@ rake db:drop db:create db:migrate tmp:clear log:clear; rails s
 
 ```
 # usage curl
-curl -d '[email]=test1@example.com&[password]=mysecret' -X POST localhost:3000/session
+curl -d 'session[email]=test1@example.com&session[password]=mysecret' -X POST localhost:3000/session
+curl -d 'session[email]=test2@example.com&session[password]=mysecret' -X POST localhost:3000/session
+curl -d 'session[email]=test3@example.com&session[password]=mysecret' -X POST localhost:3000/session
+
+curl -d '[id]=2' -X DELETE localhost:3000/session
 
 # usage httpie
 http POST :3000/session email="test1@example.com" password="mysecret"
